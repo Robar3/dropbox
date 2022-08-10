@@ -24,7 +24,7 @@ public class ConnectionHandler implements Runnable {
         while (!socket.isClosed()) {
             try {
                 String command = is.readUTF();
-                if (command.equals("./upload")) {
+                if (command.equals(Command.UPLOAD.getTitle())) {
                     String fileName = is.readUTF();
                     System.out.println("fileName: " + fileName);
                     long fileLength = is.readLong();
@@ -40,10 +40,25 @@ public class ConnectionHandler implements Runnable {
                         }
                     }
                     os.writeUTF("OK");
-                } else if (command.equals("./download")) {
-                    System.out.println("./download");
-                } else if (command.equals("./close")) {
+                } else if (command.split(" ")[0].equals(Command.DOWNLOAD.getTitle())) {
+                    File file = new File(Server.serverPath + "/" + command.split(" ")[1]);
+                    if (file.exists()) {
+                       os.writeUTF("Ok");
+                        os.writeLong(file.length());
+                        FileInputStream fis = new FileInputStream(file);
+                        buffer = new byte[1024];
+                        while (fis.available() > 0) {
+                            int bytesRead = fis.read(buffer);
+                            os.write(buffer, 0, bytesRead);
+                        }
+                        os.flush();
+                    }else {
+                        os.writeUTF("NotExist");
+                    }
+
+                } else if (command.equals(Command.CLOSE.getTitle())) {
                     closeConnection();
+                    System.out.println("Connection close");
                 }
             } catch (Exception e) {
                 e.printStackTrace();
