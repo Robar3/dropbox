@@ -29,7 +29,6 @@ public class Controller implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // TODO: 7/21/2020 init connect to server
         try {
             socket = new Socket("localhost", 8189);
             is = new DataInputStream(socket.getInputStream());

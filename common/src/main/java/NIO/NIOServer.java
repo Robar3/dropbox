@@ -3,12 +3,19 @@ package NIO;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
 
 public class NIOServer implements Runnable {
 
     ServerSocketChannel srv;
     Selector selector;
+
+    String serverPath = "./common/src/main/resources/";
+    String fileName = "";
+    boolean uploadFile = false;
 
     @Override
     public void run() {
@@ -32,35 +39,50 @@ public class NIOServer implements Runnable {
                         channel.configureBlocking(false);
                         channel.register(selector, SelectionKey.OP_READ);
                     } else if (key.isReadable()) {
-                        ByteBuffer buffer = ByteBuffer.allocate(256);
+                        ByteBuffer buffer = ByteBuffer.allocate(1024);
                         SocketChannel channel = (SocketChannel) key.channel();
-                        int cnt = channel.read(buffer);
-                        if (cnt == -1) {
-                            System.out.println("client leave chat!");
-                            channel.close();
-                        }
-                        buffer.flip();
-                        StringBuilder msg = new StringBuilder();
-                        while (buffer.hasRemaining()) {
-                            msg.append((char) buffer.get());
-                        }
-                        System.out.println(msg);
-                        for (SelectionKey out : selector.keys()) {
-                            if (out.isReadable() && out.channel() instanceof SocketChannel) {
-                                ((SocketChannel) out.channel()).write(ByteBuffer.wrap
-                                        (msg.toString().getBytes()));
+                        if (uploadFile) {
+                            Path path = Paths.get(serverPath+fileName);
+                            try (FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
+                                fileChannel.transferFrom(channel, 0, Long.MAX_VALUE);
                             }
+                            uploadFile = false;
+                        } else {
+                            int cnt = channel.read(buffer);
+                            if (cnt == -1) {
+                                System.out.println("client leave chat!");
+                                channel.close();
+                            }
+                            buffer.flip();
+                            StringBuilder msg = new StringBuilder();
+                            while (buffer.hasRemaining()) {
+                                msg.append((char) buffer.get());
+                            }
+                            if (msg.toString().startsWith("./upload")) {
+                                fileName = msg.toString().split(" ")[1];
+                                uploadFile = true;
+                            }
+                            System.out.println(msg);
                         }
+
+
+//                        for (SelectionKey out : selector.keys()) {
+//                            if (out.isReadable() && out.channel() instanceof SocketChannel) {
+//                                ((SocketChannel) out.channel()).write(ByteBuffer.wrap
+//                                        (msg.toString().getBytes()));
+//                            }
+//                        }
                         //channel.close();
                     }
                 }
             }
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
     }
 
     public static void main(String[] args) {
-        new Thread(new NIOServer()).start();
+        Thread thread = new Thread(new NIOServer());
+        thread.start();
     }
 }

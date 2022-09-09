@@ -15,15 +15,15 @@ public class Main extends Application {
         primaryStage.setTitle("Dropbox");
         primaryStage.setScene(new Scene(root));
         primaryStage.show();
-        primaryStage.setOnCloseRequest(event -> {
-            try {
-                Controller.os.writeUTF("./close");
-                Controller.socket.getOutputStream().write("close".getBytes());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            Platform.exit();
-        });
+//        primaryStage.setOnCloseRequest(event -> {
+//            try {
+//                Controller.os.writeUTF("./close");
+//                Controller.socket.getOutputStream().write("close".getBytes());
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//            Platform.exit();
+//        });
     }
 
 
